@@ -1,0 +1,100 @@
+openapi: 3.0.3
+info:
+  title: Video API
+  # description: API Gateway specification for virtual asset purchase, conversion, and transaction services. 
+  description: API for Wallet Services
+  version: 1.0.0
+servers:
+  - url: https://tiktok-trove.com/api/v1
+
+paths:
+  /videos:
+    post:
+      summary: Upload short video
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                title:
+                  type: string
+      responses:
+        '201':
+          description: Video uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  title:
+                    type: string
+                  cdnUrl:
+                    type: string
+
+  /videos/{id}:
+    get:
+      summary: Get video metadata
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Video details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  title:
+                    type: string
+                  uploader:
+                    type: string
+                  cdnUrl:
+                    type: string
+    delete:
+      summary: Delete uploaded video
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Video deleted
+
+  /videos/{id}/stats:
+    get:
+      summary: Get video stats
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stats object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  views:
+                    type: integer
+                  likes:
+                    type: integer
+                  giftsReceived:
+                    type: integer
