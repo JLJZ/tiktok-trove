@@ -1,0 +1,101 @@
+openapi: 3.0.3
+info:
+  title: Wallet API
+  # description: API Gateway specification for virtual asset purchase, conversion, and transaction services. 
+  description: API for Wallet Services
+  version: 1.0.0
+servers:
+  - url: https://tiktok-trove.com/api/v1
+
+paths:
+  /wallet:
+    get:
+      summary: Get current user's wallet
+      responses:
+        '200':
+          description: Wallet balances
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  coins:
+                    type: integer
+                  diamonds:
+                    type: integer
+
+  /wallet/coins/purchase:
+    post:
+      summary: Purchase coins
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                packageId:
+                  type: string
+      responses:
+        '200':
+          description: Coins purchased
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  newBalance:
+                    type: integer
+                  transactionId:
+                    type: string
+
+  /wallet/diamonds/convert:
+    post:
+      summary: Convert diamonds to payout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: integer
+      responses:
+        '200':
+          description: Conversion successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payoutId:
+                    type: string
+                  amount:
+                    type: integer
+                  status:
+                    type: string
+
+  /wallet/transactions:
+    get:
+      summary: List wallet transactions
+      responses:
+        '200':
+          description: Transactions list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum: [coin_purchase, gift_sent, gift_received, diamond_conversion]
+                    amount:
+                      type: integer
+                    timestamp:
+                      type: string
+                      format: date-time
