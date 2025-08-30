@@ -1,0 +1,21 @@
+### Get wallet
+GET http://localhost:3000/wallet
+x-user-id: u1
+
+### Purchase coins
+POST http://localhost:3000/wallet/coins/purchase
+Content-Type: application/json
+x-user-id: u1
+
+{ "packageId": "PKG_999" }
+
+### Convert diamonds (will fail initially without diamonds)
+POST http://localhost:3000/wallet/diamonds/convert
+Content-Type: application/json
+x-user-id: u1
+
+{ "amount": 10 }
+
+### List transactions
+GET http://localhost:3000/wallet/transactions
+x-user-id: u1
