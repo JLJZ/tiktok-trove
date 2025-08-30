@@ -1,0 +1,218 @@
+
+openapi: 3.0.3
+info:
+  title: Profit Sharing API
+  description: Minimal API for defining profit-sharing agreements, recording revenue, settling, and paying out.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+
+paths:
+  /healthz:
+    get:
+      summary: Liveness probe
+      responses:
+        '200': { description: OK }
+
+  /profit-shares:
+    get:
+      summary: List PSAs
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create a PSA
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [contentId, cycle, currency, participants, rules]
+              properties:
+                contentId: { type: string }
+                title: { type: string }
+                cycle: { type: string, enum: [PER_EVENT, DAILY, WEEKLY, MONTHLY] }
+                currency: { type: string }
+                minPayoutCents: { type: integer }
+                reservePercent: { type: number }
+                participants:
+                  type: array
+                  items:
+                    type: object
+                    required: [handle, role]
+                    properties:
+                      handle: { type: string }
+                      role: { type: string, enum: [MAIN_CREATOR, COLLABORATOR, RIGHTS_HOLDER, PLATFORM, OTHER] }
+                      walletId: { type: string }
+                rules:
+                  type: object
+                  required: [splitType, splits]
+                  properties:
+                    splitType: { type: string, enum: [PERCENTAGE, WEIGHT] }
+                    preDeductions:
+                      type: object
+                      properties:
+                        platformFeePercent: { type: number }
+                        taxWithholdingPercent: { type: number }
+                        reservePercent: { type: number }
+                    splits:
+                      type: array
+                      items:
+                        type: object
+                        required: [ref, share]
+                        properties:
+                          ref:
+                            type: object
+                            properties:
+                              role: { type: string }
+                              participantId: { type: string }
+                          share: { type: number }
+      responses:
+        '201': { description: Created }
+
+  /profit-shares/{psaId}:
+    get:
+      summary: Get a PSA
+      parameters:
+        - in: path
+          name: psaId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+        '404': { description: Not found }
+    patch:
+      summary: Update PSA
+      parameters:
+        - in: path
+          name: psaId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200': { description: OK }
+        '409': { description: Conflict }
+
+  /profit-shares/{psaId}/participants:
+    get:
+      summary: List participants
+      parameters:
+        - in: path
+          name: psaId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Add participant
+      parameters:
+        - in: path
+          name: psaId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [handle, role]
+              properties:
+                handle: { type: string }
+                role: { type: string }
+                walletId: { type: string }
+      responses:
+        '201': { description: Created }
+        '422': { description: Invalid }
+
+  /revenue-events:
+    get:
+      summary: Query events
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Record event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [stream, amountCents, currency, occurredAt]
+              properties:
+                psaId: { type: string }
+                contentId: { type: string }
+                stream: { type: string }
+                amountCents: { type: integer }
+                currency: { type: string }
+                occurredAt: { type: string, format: date-time }
+      responses:
+        '201': { description: Created }
+        '404': { description: PSA/Content not found }
+
+  /settlements:
+    get:
+      summary: List settlements
+      responses:
+        '200': { description: OK }
+    post:
+      summary: Create settlement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [psaId, period]
+              properties:
+                psaId: { type: string }
+                period:
+                  type: object
+                  required: [start, end]
+                  properties:
+                    start: { type: string, format: date-time }
+                    end: { type: string, format: date-time }
+                dryRun: { type: boolean, default: false }
+      responses:
+        '202': { description: Started }
+
+  /settlements/{settlementId}:
+    get:
+      summary: Get settlement
+      parameters:
+        - in: path
+          name: settlementId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+        '404': { description: Not found }
+
+  /settlements/{settlementId}/payouts:
+    post:
+      summary: Initiate payouts
+      parameters:
+        - in: path
+          name: settlementId
+          required: true
+          schema: { type: string }
+      responses:
+        '202': { description: Started }
+
+  /payouts/{payoutId}:
+    get:
+      summary: Get payout
+      parameters:
+        - in: path
+          name: payoutId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+        '404': { description: Not found }
