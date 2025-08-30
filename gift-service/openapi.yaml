@@ -1,0 +1,101 @@
+openapi: 3.0.3
+info:
+  title: TikTok Gifting API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+  /gifts/catalog:
+    get:
+      summary: Get gift catalog
+      responses:
+        '200':
+          description: List of gifts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Gift'
+  /gifts/send:
+    post:
+      summary: Send a gift to a video
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [videoId, giftId, qty]
+              properties:
+                videoId:
+                  type: string
+                giftId:
+                  type: string
+                qty:
+                  type: integer
+                  minimum: 1
+      responses:
+        '201':
+          description: Gift sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GiftReceipt'
+        '400':
+          description: Invalid body
+        '404':
+          description: Gift not found
+  /gifts/video/{videoId}:
+    get:
+      summary: List gifts for a video
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of gifts for video
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GiftEntryPublic'
+  /wallet/transactions:
+    get:
+      summary: Placeholder for wallet transactions
+      responses:
+        '501':
+          description: Not Implemented
+components:
+  schemas:
+    Gift:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        priceCoins: { type: integer, minimum: 0 }
+    GiftReceipt:
+      type: object
+      properties:
+        message: { type: string }
+        videoId: { type: string }
+        giftId: { type: string }
+        qty: { type: integer }
+        coinsCharged: { type: integer }
+        entryId: { type: string }
+    GiftEntryPublic:
+      type: object
+      properties:
+        giftId: { type: string }
+        qty: { type: integer }
+        senderId: { type: string }

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "rose",
+    "name": "Rose",
+    "priceCoins": 1
+  },
+  {
+    "id": "heart",
+    "name": "Heart",
+    "priceCoins": 5
+  },
+  {
+    "id": "rocket",
+    "name": "Rocket",
+    "priceCoins": 20
+  }
+]
