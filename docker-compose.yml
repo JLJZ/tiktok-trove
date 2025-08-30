@@ -1,0 +1,107 @@
+services:
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - JWT_SECRET=your-super-secret-jwt-key
+      - AUTH_SERVICE_URL=http://localhost:3001
+      - USER_SERVICE_URL=http://localhost:3002
+      - VIDEO_SERVICE_URL=http://localhost:3003
+      - GIFT_SERVICE_URL=http://localhost:3004
+      - WALLET_SERVICE_URL=http://localhost:3005
+      - FRAUD_SERVICE_URL=http://localhost:3006
+    depends_on:
+      - redis
+    networks:
+      - tiktok-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - tiktok-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # Placeholder services (to be implemented)
+  auth-service:
+    image: nginx:alpine
+    ports:
+      - "3001:80"
+    networks:
+      - tiktok-network
+    volumes:
+      - ./mock-responses:/usr/share/nginx/html
+    restart: unless-stopped
+
+  user-service:
+    image: nginx:alpine
+    ports:
+      - "3002:80"
+    networks:
+      - tiktok-network
+    volumes:
+      - ./mock-responses:/usr/share/nginx/html
+    restart: unless-stopped
+
+  video-service:
+    image: nginx:alpine
+    ports:
+      - "3003:80"
+    networks:
+      - tiktok-network
+    volumes:
+      - ./mock-responses:/usr/share/nginx/html
+    restart: unless-stopped
+
+  gift-service:
+    image: nginx:alpine
+    ports:
+      - "3004:80"
+    networks:
+      - tiktok-network
+    volumes:
+      - ./mock-responses:/usr/share/nginx/html
+    restart: unless-stopped
+
+  wallet-service:
+    image: nginx:alpine
+    ports:
+      - "3005:80"
+    networks:
+      - tiktok-network
+    volumes:
+      - ./mock-responses:/usr/share/nginx/html
+    restart: unless-stopped
+
+  fraud-service:
+    image: nginx:alpine
+    ports:
+      - "3006:80"
+    networks:
+      - tiktok-network
+    volumes:
+      - ./mock-responses:/usr/share/nginx/html
+    restart: unless-stopped
+
+networks:
+  tiktok-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+
