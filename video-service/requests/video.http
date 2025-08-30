@@ -1,0 +1,19 @@
+### Upload a short video
+POST http://localhost:3001/videos
+x-user-id: u1
+Content-Type: multipart/form-data
+
+# file: ./sample.mp4
+# title=My First Video
+
+### Get video metadata
+GET http://localhost:3001/videos/{{video_id}}
+x-user-id: u1
+
+### Get video stats
+GET http://localhost:3001/videos/{{video_id}}/stats
+x-user-id: u1
+
+### Delete a video
+DELETE http://localhost:3001/videos/{{video_id}}
+x-user-id: u1
