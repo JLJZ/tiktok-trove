@@ -16,7 +16,6 @@ const config = {
   port: process.env.PORT || 3000,
   jwtSecret: process.env.JWT_SECRET || 'your-secret-key',
   services: {
-    auth: process.env.AUTH_SERVICE_URL || 'http://auth-service:3001',
     user: process.env.USER_SERVICE_URL || 'http://user-service:3002',
     video: process.env.VIDEO_SERVICE_URL || 'http://video-service:3003',
     gift: process.env.GIFT_SERVICE_URL || 'http://gift-service:3004',
@@ -72,15 +71,19 @@ const authenticateToken = (req, res, next) => {
 // Service proxy helper
 const proxyToService = async (serviceUrl, path, method = 'GET', data = null, headers = {}) => {
   try {
-    const response = await axios({
+    const request = {
       method,
       url: `${serviceUrl}${path}`,
       data,
       headers,
       timeout: 10000
-    });
+    };
+    console.info(request);
+    const response = await axios(request);
     return response;
+
   } catch (error) {
+    console.error(error)
     if (error.response) {
       throw error;
     }
@@ -105,8 +108,8 @@ app.post('/auth/register', [
 ], handleValidationErrors, async (req, res) => {
   try {
     const response = await proxyToService(
-      config.services.auth, 
-      '/register', 
+      config.services.auth,
+      '/auth/register', 
       'POST', 
       req.body
     );
@@ -124,8 +127,8 @@ app.post('/auth/login', [
 ], handleValidationErrors, async (req, res) => {
   try {
     const response = await proxyToService(
-      config.services.auth, 
-      '/login', 
+      config.services.user, 
+      '/auth/login', 
       'POST', 
       req.body
     );

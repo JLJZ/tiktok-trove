@@ -5,6 +5,7 @@ import { Play, Pause, Upload, Gift, Wallet, User, Home, LogOut, BarChart3, Coins
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+
 /**
  * TikTok-Style SPA that consumes the provided OpenAPI endpoints.
  * Base server is taken from the OpenAPI: https://api.example.com/api/v1
@@ -34,7 +35,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 /****************************
  * API CLIENT
  ****************************/
-const BASE_URL = "https://api.example.com/api/v1"; // change if needed
+const API_URL = import.meta.env.API_URL || "http://localhost:3000"; // change if needed
 
 type LoginReq = { email: string; password: string };
 // Assumed response: { token: string, user: { id: string, name: string, avatarUrl?: string } }
@@ -62,7 +63,7 @@ type DiamondsConvertReq = { diamonds: number };
 type Txn = { id: string; type: string; amount: number; createdAt: string };
 
 async function api<T>(path: string, opts: RequestInit = {}, token?: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(`${API_URL}${path}`, {
     ...opts,
     headers: {
       "Content-Type": opts.body instanceof FormData ? "" : "application/json",

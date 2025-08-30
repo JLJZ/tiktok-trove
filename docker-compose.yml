@@ -7,16 +7,14 @@ services:
       - NODE_ENV=development
       - PORT=3000
       - JWT_SECRET=your-super-secret-jwt-key
-      - AUTH_SERVICE_URL=http://localhost:3001
-      - USER_SERVICE_URL=http://localhost:3002
-      - VIDEO_SERVICE_URL=http://localhost:3003
-      - GIFT_SERVICE_URL=http://localhost:3004
-      - WALLET_SERVICE_URL=http://localhost:3005
-      - FRAUD_SERVICE_URL=http://localhost:3006
+      - USER_SERVICE_URL=http://user-service:3002
+      - VIDEO_SERVICE_URL=http://video-service:3003
+      - GIFT_SERVICE_URL=http://gift-service:3004
+      - WALLET_SERVICE_URL=http://wallet-service:3005
     depends_on:
       - redis
     networks:
-      - tiktok-network
+      - internal-net
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
@@ -25,7 +23,26 @@ services:
       retries: 3
       start_period: 40s
 
-  # Redis for caching and session management
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=user_service_db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - internal-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d user_service_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   redis:
     image: redis:7-alpine
     ports:
@@ -33,37 +50,51 @@ services:
     volumes:
       - redis-data:/data
     networks:
-      - tiktok-network
+      - internal-net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
     command: redis-server --appendonly yes
 
-  # Placeholder services (to be implemented)
-  auth-service:
-    image: nginx:alpine
-    ports:
-      - "3001:80"
-    networks:
-      - tiktok-network
-    volumes:
-      - ./mock-responses:/usr/share/nginx/html
-    restart: unless-stopped
-
   user-service:
-    image: nginx:alpine
+    build: ./user-service
     ports:
-      - "3002:80"
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/user_service_db?schema=public
+      - JWT_SECRET=your-super-secret-jwt
+      - JWT_EXPIRES_IN=1h
+      - REFRESH_TOKEN_EXPIRES_IN=7d
+      - ALLOWED_ORIGINS=http://api-gateway:3000
+      - LOG_LEVEL=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
-      - tiktok-network
-    volumes:
-      - ./mock-responses:/usr/share/nginx/html
+      - internal-net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3002/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./logs:/app/logs
 
   video-service:
     image: nginx:alpine
     ports:
       - "3003:80"
     networks:
-      - tiktok-network
+      - internal-net
     volumes:
       - ./mock-responses:/usr/share/nginx/html
     restart: unless-stopped
@@ -73,7 +104,7 @@ services:
     ports:
       - "3004:80"
     networks:
-      - tiktok-network
+      - internal-net
     volumes:
       - ./mock-responses:/usr/share/nginx/html
     restart: unless-stopped
@@ -83,25 +114,26 @@ services:
     ports:
       - "3005:80"
     networks:
-      - tiktok-network
+      - internal-net
     volumes:
       - ./mock-responses:/usr/share/nginx/html
     restart: unless-stopped
 
-  fraud-service:
-    image: nginx:alpine
-    ports:
-      - "3006:80"
-    networks:
-      - tiktok-network
-    volumes:
-      - ./mock-responses:/usr/share/nginx/html
-    restart: unless-stopped
+  # fraud-service:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "3006:80"
+  #   networks:
+  #     - internal-net
+  #   volumes:
+  #     - ./mock-responses:/usr/share/nginx/html
+  #   restart: unless-stopped
 
 networks:
-  tiktok-network:
+  internal-net:
     driver: bridge
 
 volumes:
   redis-data:
-
+  postgres-data:
+  pgadmin-data:
